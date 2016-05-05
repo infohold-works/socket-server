@@ -8,7 +8,8 @@ connect(function(db) {
     var collection = db.collection('mb_user');
     var socketid;
     var onlineCount = 0;
-    //更改登录状态
+
+    // 更改登录状态
     function updateOnlineStat(username, stat) {
         collection.update({
             username: username
@@ -18,7 +19,8 @@ connect(function(db) {
             }
         });
     }
-    //更改socketid
+
+    // 更改socketid
     function updateSocketId(username, socketid) {
         collection.update({
             username: username
@@ -28,7 +30,8 @@ connect(function(db) {
             }
         });
     }
-    //每次重启服务器时,重置用户登录状态和socketid
+
+    // 每次重启服务器时,重置用户登录状态和socketid
     collection.find({}).toArray(function(err, docs) {
         for (var i = 0; i < docs.length; i++) {
             collection.update({
@@ -50,15 +53,17 @@ connect(function(db) {
             socket.name = obj.username;
             updateSocketId(obj.username, socket.id);
         });
-        //客户端验证服务端是否启动
+
+        // 客户端验证服务端是否启动
         socket.on('serverOnlineStat', function() {
-                io.emit('serverOnlineStat', {
-                    isOnlineStat: true
-                })
+            io.emit('serverOnlineStat', {
+                isOnlineStat: true
             })
-            //接收消息并发送给指定客户端
+        })
+
+        // 接收消息并发送给指定客户端
         socket.on('private message', function(obj) {
-	    console.dir(obj);
+            console.dir(obj);
             collection.find({
                 username: obj.username
             }).toArray(function(err, docs) {
@@ -72,7 +77,8 @@ connect(function(db) {
                 }
             });
         });
-        //推送给所有客户端
+
+        // 推送给所有客户端
         socket.on('public message', function(obj) {
             io.emit('public message', {
                 title: obj.title,
@@ -81,7 +87,7 @@ connect(function(db) {
             });
         });
 
-        //监测登录成功的用户退出
+        // 监测登录成功的用户退出
         socket.on('disconnect', function() {
             collection.find({
                 username: socket.name
@@ -94,10 +100,12 @@ connect(function(db) {
                         updateSocketId(socket.name, "");
                     }
                 } catch (e) {
-                    //异常处理
+                    // 异常处理
                 }
             });
         });
+
+        // 用户退出
         socket.on('exit', function(obj) {
             onlineCount--;
             console.log(obj.username + "退出! 当前在线人数:" + onlineCount);
