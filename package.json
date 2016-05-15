@@ -10,7 +10,7 @@
   "author": "xiaoluoboding && dongjiqiang",
   "license": "MIT",
   "dependencies": {
-    "mongodb": "^2.1.18",
+    "mongoose": "^4.4.17",
     "socket.io": "^1.4.5"
   }
 }
