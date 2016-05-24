@@ -38,7 +38,7 @@ io.on('connection', function(socket) {
     socket.on('private message', function(obj) {
         User.findOne({username: obj.username}, function(err, docs) {
             if (docs.online_stat) {
-                io.connected[docs[0].socket_id].emit('private message', {
+                io.sockets.connected[docs.socket_id].emit('private message', {
                     title: obj.title,
                     desc: obj.desc,
                     typeid: obj.typeid
