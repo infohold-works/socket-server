@@ -4,8 +4,6 @@ var mongoose = require('mongoose');
 var db = mongoose.connect(conf.db.uri, conf.db.options);
 var User = require('./userModel');
 
-var onlineCount = 0;
-
 function disconnect(username) {
     User.update({username: username}, {$set: {online_stat: false, socket_id: ""}}).exec();
 }
@@ -28,15 +26,17 @@ io.on('connection', function(socket) {
 
     // 用户登录
     socket.on('login', function(obj) {
-        onlineCount++;
-        console.log('(' + obj.username + ") --login---! Online User:[" + onlineCount + ']');
+        console.log('(' + obj.username + ") --login---! ");
         socket.name = obj.username;
         User.update({username: obj.username}, {$set: {socket_id: socket.id}}).exec();
+        io.emit('onlineCountAdd',{
+            username:obj.username
+        });
     });
 
     // 接收消息并发送给指定客户端
     socket.on('private message', function(obj) {
-        User.findOne({username: obj.username}, function(err, docs) {
+        User.findOne({userid: obj.userid}, function(err, docs) {
             if (docs.online_stat) {
                 io.sockets.connected[docs.socket_id].emit('private message', {
                     title: obj.title,
@@ -58,8 +58,7 @@ io.on('connection', function(socket) {
 
     // 用户登出
     socket.on('logout', function(obj) {
-        onlineCount--;
-        console.log('(' + obj.username + ") --logout--! Online User:[" + onlineCount + ']');
+        console.log('(' + obj.username + ") --logout--! ");
         disconnect(obj.username);
     });
 
@@ -68,9 +67,11 @@ io.on('connection', function(socket) {
         User.findOne({username: socket.name}, function(err, docs) {
             try {
                 if (docs.online_stat) {
-                    onlineCount--;
-                    console.log('(' + socket.name + ") disconnect! online User:[" + onlineCount + ']');
+                    console.log('(' + socket.name + ") disconnect! ");
                     disconnect(socket.name);
+                    io.emit('onlineCountDel',{
+                        username:socket.name
+                    });
                 }
             } catch (e) {
                 // 异常处理
